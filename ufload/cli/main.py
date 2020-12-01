@@ -117,6 +117,8 @@ def _cmdRestore(args):
     ss = 'SYNC_SERVER_LOCAL'
     if args.ss is not None:
         ss = args.ss
+        if args.db_prefix:
+            ss = '%s_%s' % (args.db_prefix, ss)
 
     if args.sync or args.synclight:
         # Restore a sync server (LIGHT WITH MASTER)

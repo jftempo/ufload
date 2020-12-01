@@ -579,7 +579,9 @@ def _db_to_instance(args, db):
     if db.startswith(ss):
         return ss
 
-    return '_'.join(db.split('_')[0:-2])
+    if not args.nosuffix:
+        return '_'.join(db.split('_')[0:-2])
+    return db
 
 def cleanDbs(args):
 
@@ -605,6 +607,8 @@ def cleanDbs(args):
     return nb
 
 def sync_link(args, hwid, db, sdb, all=False):
+    if db == sdb:
+        return True
     instance = _db_to_instance(args, db)
     #Create the instance in the sync server if it does not already exist
     rc = psql(args, 'insert into sync_server_entity (create_uid, create_date, write_date, write_uid, user_id, name, state) SELECT 1, now(), now(), 1, 1, \'%s\', \'validated\' FROM sync_server_entity WHERE NOT EXISTS (SELECT 1 FROM sync_server_entity WHERE name = \'%s\') ' % (instance, instance), sdb )
@@ -689,10 +693,13 @@ def connect_instance_to_sync_server(args, sync_server, db):
 
     # if db.startswith('SYNC_SERVER'):
     #    return 0
+    if 'SYNC_SERVER' in db:
+        return 0
 
     port = 8069
     if args.sync_xmlrpcport:
         port = int(args.sync_xmlrpcport)
+    _run_out(args, mkpsql(args, "update res_users set password='%s' where login = '%s';" % (args.connectionpw, args.connectionuser.lower()) , sync_server))
 
     try:
         #oerp = oerplib.OERP('127.0.0.1', protocol='xmlrpc', port=12173, version='6.0')
